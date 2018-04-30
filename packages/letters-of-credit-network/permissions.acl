@@ -1,0 +1,126 @@
+rule ParticipantsSeeSelves {
+  	description: "Let participants see themselves"
+  	participant(p): "org.hyperledger.composer.system.Participant"
+  	operation: ALL
+    resource(r): "org.hyperledger.composer.system.Participant"
+  	condition: (r.getIdentifier() == p.getIdentifier())
+  	action: ALLOW
+}
+
+rule CustomerSeeBankEmployee {
+	description: "Let Customers see their BankEmployees"
+  	participant(p): "org.acme.loc.Customer"
+  	operation: READ
+    resource(r): "org.acme.loc.BankEmployee"
+  	condition: (r.bankName == p.bankName)
+  	action: ALLOW
+}
+
+rule BankEmployeeSeeCustomer {
+	description: "Let BankEmployees see their Customers"
+  	participant(p): "org.acme.loc.BankEmployee"
+  	operation: READ
+    resource(r): "org.acme.loc.Customer"
+  	condition: (r.bankName == p.bankName)
+  	action: ALLOW
+}
+
+rule SeeOtherCustomers {
+	description: "Let Customers see other Customers"
+  	participant: "org.acme.loc.Customer"
+  	operation: READ
+    resource: "org.acme.loc.Customer"
+  	action: ALLOW
+}
+
+rule CustomerMakeApplication {
+	description: "All customers can submit an InitialApplication transaction"
+  	participant: "org.acme.loc.Customer"
+  	operation: CREATE
+    resource: "org.acme.loc.InitialApplication"
+  	action: ALLOW
+}
+
+rule CustomerCreateLOC {
+	description: "All customers can create a LetterOfCredit asset"
+  	participant: "org.acme.loc.Customer"
+  	operation: CREATE
+    resource: "org.acme.loc.LetterOfCredit"
+  	transaction: "org.acme.loc.InitialApplication"
+  	action: ALLOW
+}
+
+rule ViewLetterOfCredit {
+	description: "All Persons can view the letter of credit"
+  	participant: "org.acme.loc.Person"
+  	operation: READ
+    resource: "org.acme.loc.LetterOfCredit"
+  	action: ALLOW
+}
+
+rule PersonApproveApplication {
+	description: "All Persons can submit an Approve transaction"
+  	participant: "org.acme.loc.Person"
+  	operation: CREATE
+    resource: "org.acme.loc.Approve"
+  	action: ALLOW
+}
+
+rule PersonAddApproval {
+	description: "All Persons can add their approval to the Letter of Credit"
+  	participant: "org.acme.loc.Person"
+  	operation: UPDATE
+    resource: "org.acme.loc.LetterOfCredit"
+  	transaction: "org.acme.loc.Approve"
+  	action: ALLOW
+}
+
+rule PersonSuggestChanges {
+	description: "All Persons can submit a SuggestChanges transaction"
+  	participant: "org.acme.loc.Person"
+  	operation: CREATE
+    resource: "org.acme.loc.SuggestChanges"
+  	action: ALLOW
+}
+
+rule PersonAddChanges {
+	description: "All Persons can update the LetterOfCredit with their suggested rules"
+  	participant: "org.acme.loc.Person"
+  	operation: UPDATE
+    resource: "org.acme.loc.LetterOfCredit"
+  	transaction: "org.acme.loc.SuggestChanges"
+  	action: ALLOW
+}
+
+rule PersonRejectApplication {
+	description: "All Persons can submit a Reject transaction"
+  	participant: "org.acme.loc.Person"
+  	operation: CREATE
+    resource: "org.acme.loc.Reject"
+  	action: ALLOW
+}
+
+rule PersonMarksAsRejected {
+	description: "All Persons can update the LetterOfCredit with a REJECTED status"
+  	participant: "org.acme.loc.Person"
+  	operation: UPDATE
+    resource: "org.acme.loc.LetterOfCredit"
+  	transaction: "org.acme.loc.Reject"
+  	action: ALLOW
+}
+
+rule NetworkAdminUser {
+    description: "Grant business network administrators full access to user resources"
+    participant: "org.hyperledger.composer.system.NetworkAdmin"
+    operation: ALL
+    resource: "**"
+    action: ALLOW
+}
+
+rule System {
+    description: "Grant all full access to system resources"
+    participant: "org.**"
+    operation: ALL
+    resource: "org.hyperledger.composer.system.**"
+    action: ALLOW
+}
