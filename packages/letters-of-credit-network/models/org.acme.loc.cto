@@ -10,6 +10,7 @@ enum LetterStatus {
   o APPROVED
   o SHIPPED
   o RECEIVED
+  o READY_FOR_PAYMENT
   o CLOSED
   o REJECTED
 }
@@ -17,24 +18,29 @@ enum LetterStatus {
 // ASSETS
 asset LetterOfCredit identified by letterId {
   o String letterId
-  --> Person applicant
-  --> Person beneficiary
-  o String issuingBank
-  o String exportingBank
+  --> Customer applicant
+  --> Customer beneficiary
+  --> Bank issuingBank
+  --> Bank exportingBank
   o Rule[] rules
   o ProductDetails productDetails
   o String [] evidence
-  o String [] approval
+  --> Person [] approval
   o LetterStatus status
   o String closeReason optional
 }
 
 // PARTICIPANTS
+participant Bank identified by bankID {
+  o String bankID
+  o String name
+}
+
 abstract participant Person identified by personId {
   o String personId
   o String name
   o String lastName optional
-  o String bankName
+  --> Bank bank
 }
 
 participant Customer extends Person {
@@ -42,7 +48,6 @@ participant Customer extends Person {
 }
 
 participant BankEmployee extends Person {
-
 }
 
 // CONCEPTS
@@ -60,8 +65,8 @@ concept ProductDetails {
 // TRANSACTIONS + EVENTS
 transaction InitialApplication {
   o String letterId
-  --> Person applicant
-  --> Person beneficiary
+  --> Customer applicant
+  --> Customer beneficiary
   o Rule[] rules
   o ProductDetails productDetails
 }
@@ -72,12 +77,12 @@ event InitialApplicationEvent {
 
 transaction Approve {
   --> LetterOfCredit loc
-  o String approvingParty
+  --> Person approvingParty
 }
 
 event ApproveEvent {
   --> LetterOfCredit loc
-  o String approvingParty
+  --> Person approvingParty
 }
 
 transaction Reject {
@@ -93,11 +98,13 @@ event RejectEvent {
 transaction SuggestChanges {
   --> LetterOfCredit loc
   o Rule[] rules
+  --> Person suggestingParty
 }
 
 event SuggestChangesEvent {
   --> LetterOfCredit loc
   o Rule[] rules
+  --> Person suggestingParty
 }
 
 transaction ShipProduct {
@@ -117,6 +124,13 @@ event ReceiveProductEvent {
   --> LetterOfCredit loc
 }
 
+transaction ReadyForPayment {
+  --> LetterOfCredit loc
+}
+event ReadyForPaymentEvent {
+  --> LetterOfCredit loc
+}
+
 transaction Close {
   --> LetterOfCredit loc
   o String closeReason
@@ -129,5 +143,4 @@ event CloseEvent {
 
 // TRANSACTIONS FOR SETUP
 transaction CreateDemoParticipants {
-
 }

@@ -12,12 +12,12 @@ async function initialApplication(application) {
     const letter = factory.newResource(namespace, 'LetterOfCredit', application.letterId);
     letter.applicant = factory.newRelationship(namespace, 'Customer', application.applicant.getIdentifier());
     letter.beneficiary = factory.newRelationship(namespace, 'Customer', application.beneficiary.getIdentifier());
-    letter.issuingBank = application.applicant.bankName;
-  	letter.exportingBank = application.beneficiary.bankName;
+    letter.issuingBank = factory.newRelationship(namespace, 'Bank', application.applicant.bank.getIdentifier());
+    letter.exportingBank = factory.newRelationship(namespace, 'Bank', application.beneficiary.bank.getIdentifier());
     letter.rules = application.rules;
     letter.productDetails = application.productDetails;
     letter.evidence = [];
-    letter.approval = [];
+    letter.approval = [factory.newRelationship(namespace, 'Customer', application.applicant.getIdentifier())];
     letter.status = 'AWAITING_APPROVAL';
 
     //save the application
@@ -47,8 +47,14 @@ async function approve(approveRequest) {
         throw new Error ('All four parties have already approved this letter of credit');
     } else if (letter.approval.includes(approveRequest.approvingParty)) {
         throw new Error ('This person has already approved this letter of credit');
+    } else if (approveRequest.approvingParty.getType() === 'BankEmployee') {
+        letter.approval.forEach((approvingParty) => {
+            if (approvingParty.getType() === 'BankEmployee' && approvingParty.bank.getIdentifier() === approveRequest.approvingParty.bank.getIdentifier()) {
+                throw new Error('Your bank has already approved of this request');
+            }
+        });
     } else {
-        letter.approval.push(approveRequest.approvingParty);
+        letter.approval.push(factory.newRelationship(namespace, approveRequest.approvingParty.getType(), approveRequest.approvingParty.getIdentifier()));
         // update the status of the letter if everyone has approved
         if (letter.approval.length === 4) {
             letter.status = 'APPROVED';
@@ -79,6 +85,8 @@ async function reject(rejectRequest) {
 
     if (letter.status === 'CLOSED' || letter.status === 'REJECTED') {
         throw new Error('This letter of credit has already been closed');
+    } else if (letter.status === 'APPROVED') {
+      	throw new Error('This letter of credit has already been approved');
     } else {
         letter.status = 'REJECTED';
         letter.closeReason = rejectRequest.closeReason;
@@ -108,12 +116,14 @@ async function suggestChanges(changeRequest) {
 
     if (letter.status === 'CLOSED' || letter.status === 'REJECTED') {
         throw new Error ('This letter of credit has already been closed');
-    } else if (letter.status === 'SHIPPED' || letter.status === 'RECEIVED') {
+    } else if (letter.status === 'APPROVED') {
+      	throw new Error('This letter of credit has already been approved');
+    } else if (letter.status === 'SHIPPED' || letter.status === 'RECEIVED' || letter.status === 'READY_FOR_PAYMENT') {
         throw new Error ('The product has already been shipped');
     } else {
         letter.rules = changeRequest.rules;
         // the rules have been changed - clear the approval array and update status
-        letter.approval = [];
+        letter.approval = [changeRequest.suggestingParty];
         letter.status = 'AWAITING_APPROVAL';
 
         // update the loc with the new rules
@@ -124,6 +134,7 @@ async function suggestChanges(changeRequest) {
         const changeEvent = factory.newEvent(namespace, 'SuggestChangesEvent');
         changeEvent.loc = changeRequest.loc;
         changeEvent.rules = changeRequest.rules;
+        changeEvent.suggestingParty = changeRequest.suggestingParty;
         emit(changeEvent);
     }
 }
@@ -193,6 +204,37 @@ async function receiveProduct(receiveRequest) {
 
 
 /**
+ * Mark a given letter as "ready for payment"
+ * @param {org.acme.loc.ReadyForPayment} readyForPayment - the ReadyForPayment transaction
+ * @transaction
+ */
+async function readyForPayment(paymentRequest) {
+    const factory = getFactory();
+    const namespace = 'org.acme.loc';
+
+    let letter = paymentRequest.loc;
+
+    if (letter.status === 'RECEIVED') {
+        letter.status = 'READY_FOR_PAYMENT';
+
+        // update the status of the loc
+        const assetRegistry = await getAssetRegistry(paymentRequest.loc.getFullyQualifiedType());
+        await assetRegistry.update(letter);
+
+        // emit event
+        const paymentEvent = factory.newEvent(namespace, 'ReadyForPaymentEvent');
+        paymentEvent.loc = paymentRequest.loc;
+        emit(paymentEvent);
+    } else if (letter.status === 'CLOSED' || letter.status === 'REJECTED') {
+        throw new Error('This letter of credit has already been closed');
+    } else if (letter.status === 'READY_FOR_PAYMENT') {
+        throw new Error('The payment has already been made');
+    } else {
+        throw new Error('The payment cannot be made until the product has been received by the applicant');
+    }
+}
+
+/**
  * Close the LOC
  * @param {org.acme.loc.Close} close - the Close transaction
  * @transaction
@@ -203,7 +245,7 @@ async function close(closeRequest) {
 
     let letter = closeRequest.loc;
 
-    if (letter.status === 'RECEIVED') {
+    if (letter.status === 'READY_FOR_PAYMENT') {
         letter.status = 'CLOSED';
         letter.closeReason = closeRequest.closeReason;
 
@@ -232,15 +274,24 @@ async function createDemoParticipants() {
     const factory = getFactory();
     const namespace = 'org.acme.loc';
 
+    // create the banks
+    const bankRegistry = await getParticipantRegistry(namespace + '.Bank');
+    const bank1 = factory.newResource(namespace, 'Bank', 'PB');
+    bank1.name = 'Penguin Banking';
+    await bankRegistry.add(bank1);
+    const bank2 = factory.newResource(namespace, 'Bank', 'BoH');
+    bank2.name = 'Bank of Hursley';
+    await bankRegistry.add(bank2);
+
     // create bank employees
     const employeeRegistry = await getParticipantRegistry(namespace + '.BankEmployee');
     const employee1 = factory.newResource(namespace, 'BankEmployee', 'matias');
     employee1.name = 'Matías';
-    employee1.bankName = 'Penguin Banking';
+    employee1.bank = factory.newRelationship(namespace, 'Bank', 'PB');
     await employeeRegistry.add(employee1);
     const employee2 = factory.newResource(namespace, 'BankEmployee', 'ella');
     employee2.name = 'Ella';
-    employee2.bankName = 'Bank of Hursley';
+    employee2.bank = factory.newRelationship(namespace, 'Bank', 'BoH');
     await employeeRegistry.add(employee2);
 
     // create customers
@@ -248,13 +299,13 @@ async function createDemoParticipants() {
     const customer1 = factory.newResource(namespace, 'Customer', 'alice');
     customer1.name = 'Alice';
     customer1.lastName= 'Hamilton';
-    customer1.bankName = 'Penguin Banking';
+    customer1.bank = factory.newRelationship(namespace, 'Bank', 'PB');
     customer1.companyName = 'QuickFix IT';
     await customerRegistry.add(customer1);
     const customer2 = factory.newResource(namespace, 'Customer', 'bob');
     customer2.name = 'Bob';
     customer2.lastName= 'Appleton';
-    customer2.bankName = 'Bank of Hursley';
+    customer2.bank = factory.newRelationship(namespace, 'Bank', 'BoH');
     customer2.companyName = 'Conga Computers';
     await customerRegistry.add(customer2);
 }
