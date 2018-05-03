@@ -53,23 +53,23 @@ async function approve(approveRequest) {
                 throw new Error('Your bank has already approved of this request');
             }
         });
-    } else {
-        letter.approval.push(factory.newRelationship(namespace, approveRequest.approvingParty.getType(), approveRequest.approvingParty.getIdentifier()));
-        // update the status of the letter if everyone has approved
-        if (letter.approval.length === 4) {
-            letter.status = 'APPROVED';
-        }
-
-        // update approval[]
-        const assetRegistry = await getAssetRegistry(approveRequest.loc.getFullyQualifiedType());
-        await assetRegistry.update(letter);
-
-        // emit event
-        const approveEvent = factory.newEvent(namespace, 'ApproveEvent');
-        approveEvent.loc = approveRequest.loc;
-        approveEvent.approvingParty = approveRequest.approvingParty;
-        emit(approveEvent);
     }
+
+    letter.approval.push(factory.newRelationship(namespace, approveRequest.approvingParty.getType(), approveRequest.approvingParty.getIdentifier()));
+    // update the status of the letter if everyone has approved
+    if (letter.approval.length === 4) {
+        letter.status = 'APPROVED';
+    }
+
+    // update approval[]
+    const assetRegistry = await getAssetRegistry(approveRequest.loc.getFullyQualifiedType());
+    await assetRegistry.update(letter);
+
+    // emit event
+    const approveEvent = factory.newEvent(namespace, 'ApproveEvent');
+    approveEvent.loc = approveRequest.loc;
+    approveEvent.approvingParty = approveRequest.approvingParty;
+    emit(approveEvent);
 }
 
 /**
