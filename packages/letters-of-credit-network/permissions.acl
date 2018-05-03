@@ -7,34 +7,34 @@ rule ParticipantsSeeSelves {
   	action: ALLOW
 }
 
-rule CustomerSeeBankEmployee {
-	description: "Let Customers see their BankEmployees"
-  	participant(p): "org.acme.loc.Customer"
-  	operation: READ
-    resource(r): "org.acme.loc.BankEmployee"
-  	condition: (r.bankName == p.bankName)
-  	action: ALLOW
-}
-
-rule BankEmployeeSeeCustomer {
-	description: "Let BankEmployees see their Customers"
-  	participant(p): "org.acme.loc.BankEmployee"
-  	operation: READ
-    resource(r): "org.acme.loc.Customer"
-  	condition: (r.bankName == p.bankName)
-  	action: ALLOW
-}
-
 rule SeeOtherCustomers {
-	description: "Let Customers see other Customers"
+	  description: "Let Customers see other Customers"
   	participant: "org.acme.loc.Customer"
   	operation: READ
     resource: "org.acme.loc.Customer"
   	action: ALLOW
 }
 
+rule CustomerSeeBankEmployee {
+	  description: "Let Customers see their BankEmployees"
+  	participant(p): "org.acme.loc.Customer"
+  	operation: READ
+    resource(r): "org.acme.loc.BankEmployee"
+  	condition: (r.bank.getIdentifier() == p.bank.getIdentifier())
+  	action: ALLOW
+}
+
+rule BankEmployeeSeeCustomer {
+	  description: "Let BankEmployees see their Customers"
+  	participant(p): "org.acme.loc.BankEmployee"
+  	operation: READ
+    resource(r): "org.acme.loc.Customer"
+  	condition: (r.bank.getIdentifier() == p.bank.getIdentifier())
+  	action: ALLOW
+}
+
 rule CustomerMakeApplication {
-	description: "All customers can submit an InitialApplication transaction"
+	  description: "All customers can submit an InitialApplication transaction"
   	participant: "org.acme.loc.Customer"
   	operation: CREATE
     resource: "org.acme.loc.InitialApplication"
@@ -42,7 +42,7 @@ rule CustomerMakeApplication {
 }
 
 rule CustomerCreateLOC {
-	description: "All customers can create a LetterOfCredit asset"
+	  description: "All customers can create a LetterOfCredit asset"
   	participant: "org.acme.loc.Customer"
   	operation: CREATE
     resource: "org.acme.loc.LetterOfCredit"
@@ -50,63 +50,213 @@ rule CustomerCreateLOC {
   	action: ALLOW
 }
 
-rule ViewLetterOfCredit {
-	description: "All Persons can view the letter of credit"
-  	participant: "org.acme.loc.Person"
+rule CustomerViewLetterOfCredit {
+	  description: "All customers can view letters of credit they are involved with"
+  	participant(p): "org.acme.loc.Customer"
   	operation: READ
-    resource: "org.acme.loc.LetterOfCredit"
+    resource(r): "org.acme.loc.LetterOfCredit"
+    condition: (p.getIdentifier() === r.applicant.getIdentifier() || p.getIdentifier() === r.beneficiary.getIdentifier())
   	action: ALLOW
 }
 
-rule PersonApproveApplication {
-	description: "All Persons can submit an Approve transaction"
-  	participant: "org.acme.loc.Person"
+
+rule BankEmployeeViewLetterOfCredit {
+	  description: "All bank employees can view letters of credit their bank is involved with"
+  	participant(p): "org.acme.loc.BankEmployee"
+  	operation: READ
+    resource(r): "org.acme.loc.LetterOfCredit"
+    condition: (p.bank.getIdentifier() === r.issuingBank.getIdentifier() || p.bank.getIdentifier() === r.exportingBank.getIdentifier())
+  	action: ALLOW
+}
+
+rule CustomerApproveApplication {
+	  description: "All customers can submit an Approve transaction for an LoC they are involved with"
+  	participant(p): "org.acme.loc.Customer"
   	operation: CREATE
-    resource: "org.acme.loc.Approve"
+    resource(r): "org.acme.loc.Approve"
+    condition: (p.getIdentifier() === r.loc.applicant.getIdentifier() || p.getIdentifier() === r.loc.beneficiary.getIdentifier())
   	action: ALLOW
 }
 
-rule PersonAddApproval {
-	description: "All Persons can add their approval to the Letter of Credit"
-  	participant: "org.acme.loc.Person"
-  	operation: UPDATE
-    resource: "org.acme.loc.LetterOfCredit"
-  	transaction: "org.acme.loc.Approve"
-  	action: ALLOW
-}
-
-rule PersonSuggestChanges {
-	description: "All Persons can submit a SuggestChanges transaction"
-  	participant: "org.acme.loc.Person"
+rule BankEmployeeApproveApplication {
+	  description: "All bank employees can submit an Approve transaction for an LoC their bank is involved with"
+  	participant(p): "org.acme.loc.BankEmployee"
   	operation: CREATE
-    resource: "org.acme.loc.SuggestChanges"
+    resource(r): "org.acme.loc.Approve"
+    condition: (p.bank.getIdentifier() === r.loc.issuingBank.getIdentifier() || p.bank.getIdentifier() === r.loc.exportingBank.getIdentifier())
   	action: ALLOW
 }
 
-rule PersonAddChanges {
-	description: "All Persons can update the LetterOfCredit with their suggested rules"
-  	participant: "org.acme.loc.Person"
+rule CustomerAddApproval {
+	  description: "All customers can add their approval to a Letter of Credit they are involved with"
+  	participant(p): "org.acme.loc.Customer"
   	operation: UPDATE
-    resource: "org.acme.loc.LetterOfCredit"
-  	transaction: "org.acme.loc.SuggestChanges"
+    resource(r): "org.acme.loc.LetterOfCredit"
+  	transaction(t): "org.acme.loc.Approve"
+    condition: (p.getIdentifier() === r.applicant.getIdentifier() || p.getIdentifier() === r.beneficiary.getIdentifier())
   	action: ALLOW
 }
 
-rule PersonRejectApplication {
-	description: "All Persons can submit a Reject transaction"
-  	participant: "org.acme.loc.Person"
+rule BankEmployeeAddApproval {
+	  description: "All bank employee can add their approval to a Letter of Credit their bank is involved with"
+  	participant(p): "org.acme.loc.BankEmployee"
+  	operation: UPDATE
+    resource(r): "org.acme.loc.LetterOfCredit"
+  	transaction(t): "org.acme.loc.Approve"
+    condition: (p.bank.getIdentifier() === r.issuingBank.getIdentifier() || p.bank.getIdentifier() === r.exportingBank.getIdentifier())
+  	action: ALLOW
+}
+
+rule CustomerSuggestChanges {
+	  description: "All customers can submit a SuggestChanges transaction to a Letter of Credit they are involved with"
+  	participant(p): "org.acme.loc.Customer"
   	operation: CREATE
-    resource: "org.acme.loc.Reject"
+    resource(r): "org.acme.loc.SuggestChanges"
+    condition: (p.getIdentifier() === r.loc.applicant.getIdentifier() || p.getIdentifier() === r.loc.beneficiary.getIdentifier())
   	action: ALLOW
 }
 
-rule PersonMarksAsRejected {
-	description: "All Persons can update the LetterOfCredit with a REJECTED status"
-  	participant: "org.acme.loc.Person"
-  	operation: UPDATE
-    resource: "org.acme.loc.LetterOfCredit"
-  	transaction: "org.acme.loc.Reject"
+rule BankEmployeeSuggestChanges {
+	  description: "All bank employees can submit a SuggestChanges transaction to a Letter of Credit their bank is involved with"
+  	participant(p): "org.acme.loc.Customer"
+  	operation: CREATE
+    resource(r): "org.acme.loc.SuggestChanges"
+    condition: (p.bank.getIdentifier() === r.loc.issuingBank.getIdentifier() || p.bank.getIdentifier() === r.loc.exportingBank.getIdentifier())
   	action: ALLOW
+}
+
+rule CustomerAddChanges {
+	  description: "All customers can update a LetterOfCredit with their suggested rules if they are involved in it"
+  	participant(p): "org.acme.loc.Customer"
+  	operation: UPDATE
+    resource(r): "org.acme.loc.LetterOfCredit"
+  	transaction(t): "org.acme.loc.SuggestChanges"
+    condition: (p.getIdentifier() === r.applicant.getIdentifier() || p.getIdentifier() === r.beneficiary.getIdentifier())
+  	action: ALLOW
+}
+
+rule BankEmployeeAddChanges {
+	  description: "All bank employees can update a LetterOfCredit with their suggested rules if their bank is involved in it"
+  	participant(p): "org.acme.loc.Customer"
+  	operation: UPDATE
+    resource(r): "org.acme.loc.LetterOfCredit"
+  	transaction(t): "org.acme.loc.SuggestChanges"
+    condition: (p.bank.getIdentifier() === r.issuingBank.getIdentifier() || p.bank.getIdentifier() === r.exportingBank.getIdentifier())
+  	action: ALLOW
+}
+
+rule CustomerRejectApplication {
+	  description: "All customers can submit a Reject transaction for an LoC they are involved with"
+  	participant(p): "org.acme.loc.Customer"
+  	operation: CREATE
+    resource(r): "org.acme.loc.Reject"
+    condition: (p.getIdentifier() === r.loc.applicant.getIdentifier() || p.getIdentifier() === r.loc.beneficiary.getIdentifier())
+  	action: ALLOW
+}
+
+rule BankEmployeeRejectApplication {
+	  description: "All bank employees can submit a Reject transaction for an LoC their bank is involved with"
+  	participant(p): "org.acme.loc.BankEmployee"
+  	operation: CREATE
+    resource(r): "org.acme.loc.Reject"
+    condition: (p.bank.getIdentifier() === r.loc.issuingBank.getIdentifier() || p.bank.getIdentifier() === r.loc.exportingBank.getIdentifier())
+  	action: ALLOW
+}
+
+rule CustomerMarksAsRejected {
+	  description: "All customers can update a LetterOfCredit they are involved with with a REJECTED status"
+  	participant(p): "org.acme.loc.Customer"
+  	operation: UPDATE
+    resource(r): "org.acme.loc.LetterOfCredit"
+  	transaction(t): "org.acme.loc.Reject"
+    condition: (p.getIdentifier() === r.applicant.getIdentifier() || p.getIdentifier() === r.beneficiary.getIdentifier())
+  	action: ALLOW
+}
+
+rule BankEmployeeMarksAsRejected {
+	  description: "All bank employees can update a LetterOfCredit their bank is involved with with a REJECTED status"
+  	participant(p): "org.acme.loc.BankEmployee"
+  	operation: UPDATE
+    resource(r): "org.acme.loc.LetterOfCredit"
+  	transaction(t): "org.acme.loc.Reject"
+    condition: (p.bank.getIdentifier() === r.issuingBank.getIdentifier() || p.bank.getIdentifier() === r.exportingBank.getIdentifier())
+  	action: ALLOW
+}
+
+rule BeneficiaryShipProduct {
+    description: "The beneficiary send a transaction to mark a letter of credit as relating to goods that have been shipped"
+    participant(p): "org.acme.loc.Customer"
+    operation: CREATE
+    resource(r): "org.acme.loc.ShipProduct"
+    condition: (p.getIdentifier() === r.loc.beneficiary.getIdentifier())
+    action: ALLOW
+}
+
+rule BeneficiaryMarkAsShippedProduct {
+    description: "The applicant can mark a letter of credit as relating to goods that have been shipped"
+    participant(p): "org.acme.loc.Customer"
+    operation: UPDATE
+    resource(r): "org.acme.loc.LetterOfCredit"
+    transaction(t): "org.acme.loc.ShipProduct"
+    condition: (p.getIdentifier() === r.beneficiary.getIdentifier())
+    action: ALLOW
+}
+
+rule ApplicantReceiveProduct {
+    description: "The applicant send a transaction to mark a letter of credit as relating to goods that have been received"
+    participant(p): "org.acme.loc.Customer"
+    operation: CREATE
+    resource(r): "org.acme.loc.ReceiveProduct"
+    condition: (p.getIdentifier() === r.loc.applicant.getIdentifier())
+    action: ALLOW
+}
+
+rule ApplicantMarkAsReceivedProduct {
+    description: "The applicant can mark a letter of credit as relating to goods that have been received"
+    participant(p): "org.acme.loc.Customer"
+    operation: UPDATE
+    resource(r): "org.acme.loc.LetterOfCredit"
+    transaction(t): "org.acme.loc.ReceiveProduct"
+    condition: (p.getIdentifier() === r.applicant.getIdentifier())
+    action: ALLOW
+}
+
+rule IssuingBankReadyForPayment {
+    description: "The issuing bank employee can state the letter is ready for payment"
+    participant(p): "org.acme.loc.BankEmployee"
+    operation: CREATE
+    resource(r): "org.acme.loc.ReadyForPayment"
+    condition: (p.bank.getIdentifier() === r.loc.issuingBank.getIdentifier())
+    action: ALLOW
+}
+
+rule IssuingBankMarkReadyForPayment {
+    description: "The issuing bank employee can mark the letter as ready for payment"
+    participant(p): "org.acme.loc.BankEmployee"
+    operation: UPDATE
+    resource(r): "org.acme.loc.LetterOfCredit"
+    transaction(t): "org.acme.loc.ReadyForPayment"
+    condition: (p.bank.getIdentifier() === r.issuingBank.getIdentifier())
+    action: ALLOW
+}
+
+rule ExportingBankCloseLetter {
+    description: "The exporting bank employee can close the letter"
+    participant(p): "org.acme.loc.BankEmployee"
+    operation: CREATE
+    resource(r): "org.acme.loc.Close"
+    condition: (p.bank.getIdentifier() === r.loc.exportingBank.getIdentifier())
+    action: ALLOW
+}
+
+rule ExportingBankMarkLetterClosed {
+    description: "The exporting bank employee can mark the letter as closed"
+    participant(p): "org.acme.loc.BankEmployee"
+    operation: UPDATE
+    resource(r): "org.acme.loc.LetterOfCredit"
+    transaction(t): "org.acme.loc.Close"
+    condition: (p.bank.getIdentifier() === r.exportingBank.getIdentifier())
+    action: ALLOW
 }
 
 rule NetworkAdminUser {
