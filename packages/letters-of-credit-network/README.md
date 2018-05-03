@@ -150,7 +150,7 @@ Approve the letter by submitting an `ApproveTransaction`:
 {
   "$class": "org.acme.loc.Approve",
   "loc": "resource:org.acme.loc.LetterOfCredit#LETTER-REF-123",
-  "approvingParty": "resource:org.acme.loc.Customer#ella"
+  "approvingParty": "resource:org.acme.loc.BankEmployee#ella"
 }
 ```
 
