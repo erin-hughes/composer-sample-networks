@@ -87,10 +87,10 @@ describe('Letters of Credit Network', () => {
         factory = businessNetworkConnection.getBusinessNetwork().getFactory();
 
         // create bank participants
-        const bank1 = factory.newResource(namespace, 'Bank', 'PB');
-        bank1.name = 'Penguin Banking';
-        const bank2 = factory.newResource(namespace, 'Bank', 'BoH');
-        bank2.name = 'Bank of Hursley';
+        const bank1 = factory.newResource(namespace, 'Bank', 'BoD');
+        bank1.name = 'Bank of Dinero';
+        const bank2 = factory.newResource(namespace, 'Bank', 'EB');
+        bank2.name = 'Eastwood Banking';
 
         const bankRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + '.Bank');
         await bankRegistry.add(bank1);
@@ -99,11 +99,11 @@ describe('Letters of Credit Network', () => {
         // create bank employees
         const employee1 = factory.newResource(namespace, 'BankEmployee', 'matias');
         employee1.name = 'Matías';
-        employee1.bank = factory.newRelationship(namespace, 'Bank', 'PB');
+        employee1.bank = factory.newRelationship(namespace, 'Bank', 'BoD');
 
         const employee2 = factory.newResource(namespace, 'BankEmployee', 'ella');
         employee2.name = 'Ella';
-        employee2.bank = factory.newRelationship(namespace, 'Bank', 'BoH');
+        employee2.bank = factory.newRelationship(namespace, 'Bank', 'EB');
 
         const employeeRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + '.BankEmployee');
         await employeeRegistry.add(employee1);
@@ -113,14 +113,14 @@ describe('Letters of Credit Network', () => {
         alice = factory.newResource(namespace, 'Customer', 'alice');
         alice.name = 'Alice';
         alice.lastName= 'Hamilton';
-        alice.bank = factory.newRelationship(namespace, 'Bank', 'PB');
+        alice.bank = factory.newRelationship(namespace, 'Bank', 'BoD');
         alice.companyName = 'QuickFix IT';
 
         // create bob participant
         bob = factory.newResource(namespace, 'Customer', 'bob');
         bob.name = 'Bob';
         bob.lastName= 'Bobbins';
-        bob.bank = factory.newRelationship(namespace, 'Bank', 'BoH');
+        bob.bank = factory.newRelationship(namespace, 'Bank', 'EB');
         bob.companyName = 'Conga Computers';
 
         // add alice and bob participants to the registry
@@ -219,15 +219,15 @@ describe('Letters of Credit Network', () => {
         });
 
         it('should not allow an employee of a bank to approve when another employee of the same bank already has', async () => {
-            const otherPBEmployee = factory.newResource(namespace, 'BankEmployee', 'trevor');
-            otherPBEmployee.name = 'Trevor';
-            otherPBEmployee.bank = factory.newRelationship(namespace, 'Bank', 'PB');
+            const otherBoDEmployee = factory.newResource(namespace, 'BankEmployee', 'trevor');
+            otherBoDEmployee.name = 'Trevor';
+            otherBoDEmployee.bank = factory.newRelationship(namespace, 'Bank', 'BoD');
             const employeeRegistry = await businessNetworkConnection.getParticipantRegistry(namespace + '.BankEmployee');
-            await employeeRegistry.add(otherPBEmployee);
+            await employeeRegistry.add(otherBoDEmployee);
 
             // update the letter to have already been approved by Alice
             let updatedLetter = await letterRegistry.get(letterId);
-            updatedLetter.approval = [factory.newRelationship(namespace, 'BankEmployee', otherPBEmployee.getIdentifier())];
+            updatedLetter.approval = [factory.newRelationship(namespace, 'BankEmployee', otherBoDEmployee.getIdentifier())];
             await letterRegistry.update(updatedLetter);
 
             // attempt to submit the Approve transaction and check the error

@@ -276,22 +276,22 @@ async function createDemoParticipants() {
 
     // create the banks
     const bankRegistry = await getParticipantRegistry(namespace + '.Bank');
-    const bank1 = factory.newResource(namespace, 'Bank', 'PB');
-    bank1.name = 'Penguin Banking';
+    const bank1 = factory.newResource(namespace, 'Bank', 'BoD');
+    bank1.name = 'Bank of Dinero';
     await bankRegistry.add(bank1);
-    const bank2 = factory.newResource(namespace, 'Bank', 'BoH');
-    bank2.name = 'Bank of Hursley';
+    const bank2 = factory.newResource(namespace, 'Bank', 'EB');
+    bank2.name = 'Eastwood Banking';
     await bankRegistry.add(bank2);
 
     // create bank employees
     const employeeRegistry = await getParticipantRegistry(namespace + '.BankEmployee');
     const employee1 = factory.newResource(namespace, 'BankEmployee', 'matias');
     employee1.name = 'Matías';
-    employee1.bank = factory.newRelationship(namespace, 'Bank', 'PB');
+    employee1.bank = factory.newRelationship(namespace, 'Bank', 'BoD');
     await employeeRegistry.add(employee1);
     const employee2 = factory.newResource(namespace, 'BankEmployee', 'ella');
     employee2.name = 'Ella';
-    employee2.bank = factory.newRelationship(namespace, 'Bank', 'BoH');
+    employee2.bank = factory.newRelationship(namespace, 'Bank', 'EB');
     await employeeRegistry.add(employee2);
 
     // create customers
@@ -299,13 +299,13 @@ async function createDemoParticipants() {
     const customer1 = factory.newResource(namespace, 'Customer', 'alice');
     customer1.name = 'Alice';
     customer1.lastName= 'Hamilton';
-    customer1.bank = factory.newRelationship(namespace, 'Bank', 'PB');
+    customer1.bank = factory.newRelationship(namespace, 'Bank', 'BoD');
     customer1.companyName = 'QuickFix IT';
     await customerRegistry.add(customer1);
     const customer2 = factory.newResource(namespace, 'Customer', 'bob');
     customer2.name = 'Bob';
     customer2.lastName= 'Appleton';
-    customer2.bank = factory.newRelationship(namespace, 'Bank', 'BoH');
+    customer2.bank = factory.newRelationship(namespace, 'Bank', 'EB');
     customer2.companyName = 'Conga Computers';
     await customerRegistry.add(customer2);
 }
