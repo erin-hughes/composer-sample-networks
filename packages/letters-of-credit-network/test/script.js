@@ -9,7 +9,7 @@ const chai = require('chai');
 chai.should();
 chai.use(require('chai-as-promised'));
 
-const namespace = 'org.acme.loc';
+const namespace = 'org.example.loc';
 const letterId = 'L123';
 
 describe('Letters of Credit Network', () => {

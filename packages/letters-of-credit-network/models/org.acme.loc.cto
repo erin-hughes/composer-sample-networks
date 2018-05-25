@@ -2,7 +2,7 @@
  * New model file
  */
 
-namespace org.acme.loc
+namespace org.example.loc
 
 // ENUMS
 enum LetterStatus {

@@ -2,12 +2,12 @@
 
 /**
  * Create the LOC asset
- * @param {org.acme.loc.InitialApplication} initalAppliation - the InitialApplication transaction
+ * @param {org.example.loc.InitialApplication} initalAppliation - the InitialApplication transaction
  * @transaction
  */
 async function initialApplication(application) {
     const factory = getFactory();
-    const namespace = 'org.acme.loc';
+    const namespace = 'org.example.loc';
 
     const letter = factory.newResource(namespace, 'LetterOfCredit', application.letterId);
     letter.applicant = factory.newRelationship(namespace, 'Customer', application.applicant.getIdentifier());
@@ -32,12 +32,12 @@ async function initialApplication(application) {
 
 /**
  * Update the LOC to show that it has been approved by a given person
- * @param {org.acme.loc.Approve} approve - the Approve transaction
+ * @param {org.example.loc.Approve} approve - the Approve transaction
  * @transaction
  */
 async function approve(approveRequest) {
     const factory = getFactory();
-    const namespace = 'org.acme.loc';
+    const namespace = 'org.example.loc';
 
     let letter = approveRequest.loc;
 
@@ -74,12 +74,12 @@ async function approve(approveRequest) {
 
 /**
  * Reject the LOC
- * @param {org.acme.loc.Reject} reject - the Reject transaction
+ * @param {org.example.loc.Reject} reject - the Reject transaction
  * @transaction
  */
 async function reject(rejectRequest) {
     const factory = getFactory();
-    const namespace = 'org.acme.loc';
+    const namespace = 'org.example.loc';
 
     let letter = rejectRequest.loc;
 
@@ -105,12 +105,12 @@ async function reject(rejectRequest) {
 
 /**
  * Suggest changes to the current rules in the LOC
- * @param {org.acme.loc.SuggestChanges} suggestChanges - the SuggestChanges transaction
+ * @param {org.example.loc.SuggestChanges} suggestChanges - the SuggestChanges transaction
  * @transaction
  */
 async function suggestChanges(changeRequest) {
     const factory = getFactory();
-    const namespace = 'org.acme.loc';
+    const namespace = 'org.example.loc';
 
     let letter = changeRequest.loc;
 
@@ -141,12 +141,12 @@ async function suggestChanges(changeRequest) {
 
 /**
  * "Ship" the product
- * @param {org.acme.loc.ShipProduct} shipProduct - the ShipProduct transaction
+ * @param {org.example.loc.ShipProduct} shipProduct - the ShipProduct transaction
  * @transaction
  */
 async function shipProduct(shipRequest) {
     const factory = getFactory();
-    const namespace = 'org.acme.loc';
+    const namespace = 'org.example.loc';
 
     let letter = shipRequest.loc;
 
@@ -173,12 +173,12 @@ async function shipProduct(shipRequest) {
 
 /**
  * "Recieve" the product that has been "shipped"
- * @param {org.acme.loc.ReceiveProduct} receiveProduct - the ReceiveProduct transaction
+ * @param {org.example.loc.ReceiveProduct} receiveProduct - the ReceiveProduct transaction
  * @transaction
  */
 async function receiveProduct(receiveRequest) {
     const factory = getFactory();
-    const namespace = 'org.acme.loc';
+    const namespace = 'org.example.loc';
 
     let letter = receiveRequest.loc;
 
@@ -205,12 +205,12 @@ async function receiveProduct(receiveRequest) {
 
 /**
  * Mark a given letter as "ready for payment"
- * @param {org.acme.loc.ReadyForPayment} readyForPayment - the ReadyForPayment transaction
+ * @param {org.example.loc.ReadyForPayment} readyForPayment - the ReadyForPayment transaction
  * @transaction
  */
 async function readyForPayment(paymentRequest) {
     const factory = getFactory();
-    const namespace = 'org.acme.loc';
+    const namespace = 'org.example.loc';
 
     let letter = paymentRequest.loc;
 
@@ -236,12 +236,12 @@ async function readyForPayment(paymentRequest) {
 
 /**
  * Close the LOC
- * @param {org.acme.loc.Close} close - the Close transaction
+ * @param {org.example.loc.Close} close - the Close transaction
  * @transaction
  */
 async function close(closeRequest) {
     const factory = getFactory();
-    const namespace = 'org.acme.loc';
+    const namespace = 'org.example.loc';
 
     let letter = closeRequest.loc;
 
@@ -267,12 +267,12 @@ async function close(closeRequest) {
 
 /**
  * Create the participants needed for the demo
- * @param {org.acme.loc.CreateDemoParticipants} createDemoParticipants - the CreateDemoParticipants transaction
+ * @param {org.example.loc.CreateDemoParticipants} createDemoParticipants - the CreateDemoParticipants transaction
  * @transaction
  */
 async function createDemoParticipants() {
     const factory = getFactory();
-    const namespace = 'org.acme.loc';
+    const namespace = 'org.example.loc';
 
     // create the banks
     const bankRegistry = await getParticipantRegistry(namespace + '.Bank');
